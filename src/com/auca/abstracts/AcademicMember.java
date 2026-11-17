@@ -2,9 +2,12 @@ package com.auca.abstracts;
 
 import com.auca.department.Department;
 import com.auca.exceptions.ValidationException;
+import com.auca.validation.InputValidator;
+
 import java.time.LocalDate;
 
 public abstract class AcademicMember extends Person {
+
     private String memberNumber;
     private Department department;
     private LocalDate joinDate;
@@ -12,23 +15,35 @@ public abstract class AcademicMember extends Person {
     private String institutionalEmail;
     private String advisorName;
 
-    public AcademicMember(String personId, LocalDate dateOfBirth, String phoneNumber, String email,
-                          String lastName, String firstName, String memberNumber, Department department,
-                          LocalDate joinDate, String academicStatus, String institutionalEmail, String advisorName) {
-        super(personId, dateOfBirth, phoneNumber, email, lastName, firstName);
+    public AcademicMember(
+            String personId,
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            LocalDate dateOfBirth,
+            String memberNumber,
+            Department department,
+            LocalDate joinDate,
+            String academicStatus,
+            String institutionalEmail,
+            String advisorName) {
+
+        super(
+                personId,
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                dateOfBirth
+        );
+
         this.memberNumber = memberNumber;
         this.department = department;
         this.joinDate = joinDate;
         this.academicStatus = academicStatus;
         this.institutionalEmail = institutionalEmail;
         this.advisorName = advisorName;
-    }
-
-    public AcademicMember(String personId, String firstName, String lastName, String email,
-                          String phoneNumber, LocalDate dateOfBirth, String memberNumber, Department department,
-                          LocalDate joinDate, String academicStatus, String institutionalEmail, String advisorName) {
-        this(personId, dateOfBirth, phoneNumber, email, lastName, firstName,
-                memberNumber, department, joinDate, academicStatus, institutionalEmail, advisorName);
     }
 
     public String getMemberNumber() {
@@ -82,46 +97,27 @@ public abstract class AcademicMember extends Person {
     public abstract String getAcademicCategory();
 
     @Override
-    public boolean isActive() {
-        return "ACTIVE".equalsIgnoreCase(academicStatus);
-    }
-
-    @Override
     public void validate() throws ValidationException {
-        super.validate();
-        if (memberNumber == null || memberNumber.trim().length() < MIN_ID_LENGTH || memberNumber.trim().length() > MAX_ID_LENGTH) {
-            throw new ValidationException("Member number is required and must be " + MIN_ID_LENGTH + "-" + MAX_ID_LENGTH + " characters.");
-        }
+        InputValidator.validateLength(getPersonId(), "Person ID", 2, 30);
+        InputValidator.validateLength(getFirstName(), "First name", 2, 60);
+        InputValidator.validateLength(getLastName(), "Last name", 2, 60);
+        InputValidator.validateEmail(getEmail(), "Email");
+        InputValidator.validatePhone(getPhoneNumber(), "Phone number");
+        InputValidator.validatePastDate(getDateOfBirth(), "Date of birth");
+
+        InputValidator.requireText(memberNumber, "Member number");
         if (department == null) {
-            throw new ValidationException("A registered department must be selected.");
+            throw new ValidationException("Academic member must belong to a department.");
         }
-        if (joinDate == null || joinDate.isAfter(LocalDate.now())) {
-            throw new ValidationException("Join date is required and cannot be in the future.");
-        }
-        if (academicStatus == null || (!"ACTIVE".equalsIgnoreCase(academicStatus.trim()) && !"INACTIVE".equalsIgnoreCase(academicStatus.trim()))) {
-            throw new ValidationException("Academic status must be ACTIVE or INACTIVE.");
-        }
-        if (institutionalEmail == null || institutionalEmail.trim().length() > MAX_EMAIL_LENGTH || !institutionalEmail.trim().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new ValidationException("Enter a valid institutional email address.");
-        }
-        if (advisorName == null || advisorName.trim().length() < MIN_NAME_LENGTH || advisorName.trim().length() > 120) {
-            throw new ValidationException("Advisor name must contain 2-120 characters.");
-        }
-    }
-
-    @Override
-    public String getRegistrationSummary() {
-        return super.getRegistrationSummary() + "\n" +
-                "Member Number: " + memberNumber + "\n" +
-                "Department: " + (department == null ? "Not assigned" : "[" + department.getDepartmentCode() + "] " + department.getDepartmentName()) + "\n" +
-                "Join Date: " + joinDate + "\n" +
-                "Academic Status: " + academicStatus + "\n" +
-                "Institutional Email: " + institutionalEmail + "\n" +
-                "Advisor Name: " + advisorName;
-    }
-
-    @Override
-    public String toString() {
-        return getRegistrationSummary();
+        InputValidator.validateNotFutureDate(joinDate, "Join date");
+        InputValidator.validateAllowedValue(
+                academicStatus,
+                "Academic status",
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED"
+        );
+        InputValidator.validateEmail(institutionalEmail, "Institutional email");
+        InputValidator.validateLength(advisorName, "Advisor name", 2, 120);
     }
 }

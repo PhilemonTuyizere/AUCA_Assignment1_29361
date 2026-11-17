@@ -1,9 +1,10 @@
+
 package com.auca.librarybook;
 
 import com.auca.interfaces.Identifiable;
 import com.auca.interfaces.Registrable;
 import com.auca.exceptions.ValidationException;
-import com.auca.exceptions.BookUnavailableException;
+import com.auca.validation.InputValidator;
 
 public class LibraryBook implements Identifiable, Registrable {
 
@@ -14,106 +15,76 @@ public class LibraryBook implements Identifiable, Registrable {
     private int totalCopies;
     private int availableCopies;
 
-    public LibraryBook(
-            String bookId,
-            String isbn,
-            String title,
-            String author,
-            int totalCopies,
-            int availableCopies) {
-
+    public LibraryBook(String bookId, String isbn, String title,
+                       String author, int totalCopies, int availableCopies) {
         this.bookId = bookId;
         this.isbn = isbn;
         this.title = title;
         this.author = author;
         this.totalCopies = totalCopies;
         this.availableCopies = availableCopies;
-    }
-
-    public LibraryBook(
-            String bookId,
-            String isbn,
-            String title,
-            String author,
-            int totalCopies) {
-
-        this(bookId, isbn, title, author, totalCopies, totalCopies);
     }
 
     public String getBookId() {
         return bookId;
     }
 
-    public String getIsbn() {
-        return isbn;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public int getTotalCopies() {
-        return totalCopies;
-    }
-
-    public int getAvailableCopies() {
-        return availableCopies;
-    }
-
     public void setBookId(String bookId) {
         this.bookId = bookId;
+    }
+
+    public String getIsbn() {
+        return isbn;
     }
 
     public void setIsbn(String isbn) {
         this.isbn = isbn;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 
     public void setAuthor(String author) {
         this.author = author;
     }
 
+    public int getTotalCopies() {
+        return totalCopies;
+    }
+
     public void setTotalCopies(int totalCopies) {
         this.totalCopies = totalCopies;
+    }
+
+    public int getAvailableCopies() {
+        return availableCopies;
     }
 
     public void setAvailableCopies(int availableCopies) {
         this.availableCopies = availableCopies;
     }
 
-    private void decrementStock() throws BookUnavailableException {
+    public boolean borrowCopy() {
         if (availableCopies <= 0) {
-            throw new BookUnavailableException(
-                    "No available copies of " + title + "."
-            );
+            return false;
         }
         availableCopies--;
+        return true;
     }
 
-    private void incrementStock() throws ValidationException {
-        if (availableCopies >= totalCopies) {
-            throw new ValidationException(
-                    "Cannot return this book because all copies are already available."
-            );
+    public void returnCopy() {
+        if (availableCopies < totalCopies) {
+            availableCopies++;
         }
-        availableCopies++;
-    }
-
-    @Override
-    public void borrowCopy() throws BookUnavailableException {
-        decrementStock();
-    }
-
-    @Override
-    public void returnCopy() throws ValidationException {
-        incrementStock();
     }
 
     @Override
@@ -123,7 +94,7 @@ public class LibraryBook implements Identifiable, Registrable {
 
     @Override
     public String getDisplayName() {
-        return title + " by " + author;
+        return title;
     }
 
     @Override
@@ -133,30 +104,16 @@ public class LibraryBook implements Identifiable, Registrable {
 
     @Override
     public void validate() throws ValidationException {
+        InputValidator.requireText(bookId, "Book ID");
+        InputValidator.requireText(isbn, "ISBN");
+        InputValidator.validateLength(title, "Book title", 2, 150);
+        InputValidator.validateLength(author, "Author", 2, 100);
+        InputValidator.validateNonNegative(totalCopies, "Total copies");
+        InputValidator.validateNonNegative(availableCopies, "Available copies");
 
-        if (bookId == null || bookId.trim().isEmpty()) {
-            throw new ValidationException("Book ID is required.");
-        }
-
-        if (isbn == null || isbn.trim().isEmpty()) {
-            throw new ValidationException("ISBN is required.");
-        }
-
-        if (title == null || title.trim().isEmpty()) {
-            throw new ValidationException("Book title is required.");
-        }
-
-        if (author == null || author.trim().length() < MIN_NAME_LENGTH || author.trim().length() > MAX_NAME_LENGTH) {
-            throw new ValidationException("Book author must contain " + MIN_NAME_LENGTH + "-" + MAX_NAME_LENGTH + " characters.");
-        }
-
-        if (totalCopies < 0) {
-            throw new ValidationException("Total copies cannot be negative.");
-        }
-
-        if (availableCopies < 0 || availableCopies > totalCopies) {
+        if (availableCopies > totalCopies) {
             throw new ValidationException(
-                    "Available copies must be between zero and total copies."
+                    "Available copies cannot exceed total copies."
             );
         }
     }
@@ -168,13 +125,12 @@ public class LibraryBook implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "LIBRARY BOOK DETAILS\n" +
-                "Book ID: " + bookId + "\n" +
-                "ISBN: " + isbn + "\n" +
-                "Title: " + title + "\n" +
-                "Author: " + author + "\n" +
-                "Total Copies: " + totalCopies + "\n" +
-                "Available Copies: " + availableCopies;
+        return "Book: " + title
+                + " | ID: " + bookId
+                + " | ISBN: " + isbn
+                + " | Author: " + author
+                + " | Total Copies: " + totalCopies
+                + " | Available Copies: " + availableCopies;
     }
 
     @Override

@@ -1,14 +1,13 @@
+
 package com.auca.enrollment;
 
-import com.auca.interfaces.Identifiable;
-import com.auca.interfaces.Registrable;
 import com.auca.student.Student;
 import com.auca.course.Course;
+import com.auca.interfaces.Identifiable;
+import com.auca.interfaces.Registrable;
 import com.auca.exceptions.ValidationException;
-
+import com.auca.validation.InputValidator;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 
 public class Enrollment implements Identifiable, Registrable {
 
@@ -19,20 +18,9 @@ public class Enrollment implements Identifiable, Registrable {
     private String semester;
     private String enrollmentStatus;
 
-    private static final List<String> ALLOWED_SEMESTERS =
-            Arrays.asList("SEMESTER 1", "SEMESTER 2", "SUMMER");
-
-    private static final List<String> ALLOWED_STATUSES =
-            Arrays.asList("ACTIVE", "COMPLETED", "CANCELLED");
-
-    public Enrollment(
-            String enrollmentId,
-            Student student,
-            Course course,
-            LocalDate enrollmentDate,
-            String semester,
-            String enrollmentStatus) {
-
+    public Enrollment(String enrollmentId, Student student, Course course,
+                      LocalDate enrollmentDate, String semester,
+                      String enrollmentStatus) {
         this.enrollmentId = enrollmentId;
         this.student = student;
         this.course = course;
@@ -45,44 +33,44 @@ public class Enrollment implements Identifiable, Registrable {
         return enrollmentId;
     }
 
-    public Student getStudent() {
-        return student;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public LocalDate getEnrollmentDate() {
-        return enrollmentDate;
-    }
-
-    public String getSemester() {
-        return semester;
-    }
-
-    public String getEnrollmentStatus() {
-        return enrollmentStatus;
-    }
-
     public void setEnrollmentId(String enrollmentId) {
         this.enrollmentId = enrollmentId;
+    }
+
+    public Student getStudent() {
+        return student;
     }
 
     public void setStudent(Student student) {
         this.student = student;
     }
 
+    public Course getCourse() {
+        return course;
+    }
+
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public LocalDate getEnrollmentDate() {
+        return enrollmentDate;
     }
 
     public void setEnrollmentDate(LocalDate enrollmentDate) {
         this.enrollmentDate = enrollmentDate;
     }
 
+    public String getSemester() {
+        return semester;
+    }
+
     public void setSemester(String semester) {
         this.semester = semester;
+    }
+
+    public String getEnrollmentStatus() {
+        return enrollmentStatus;
     }
 
     public void setEnrollmentStatus(String enrollmentStatus) {
@@ -96,7 +84,9 @@ public class Enrollment implements Identifiable, Registrable {
 
     @Override
     public String getDisplayName() {
-        return (student == null ? "Unknown" : student.getDisplayName()) + " - " + (course == null ? "Unknown" : course.getCourseTitle());
+        return student == null ? enrollmentId
+                : student.getDisplayName() + " - "
+                + (course == null ? "No course" : course.getCourseTitle());
     }
 
     @Override
@@ -106,38 +96,25 @@ public class Enrollment implements Identifiable, Registrable {
 
     @Override
     public void validate() throws ValidationException {
-
-        if (enrollmentId == null || enrollmentId.trim().isEmpty()) {
-            throw new ValidationException("Enrollment ID is required.");
-        }
+        InputValidator.requireText(enrollmentId, "Enrollment ID");
 
         if (student == null) {
-            throw new ValidationException("A registered student must be selected.");
+            throw new ValidationException("Enrollment requires a student.");
         }
 
         if (course == null) {
-            throw new ValidationException("A registered course must be selected.");
+            throw new ValidationException("Enrollment requires a course.");
         }
 
-        if (enrollmentDate == null || enrollmentDate.isAfter(LocalDate.now())) {
-            throw new ValidationException(
-                    "Enrollment date is required and cannot be in the future."
-            );
-        }
-
-        if (semester == null ||
-                !ALLOWED_SEMESTERS.contains(semester.trim().toUpperCase())) {
-            throw new ValidationException(
-                    "Semester must be SEMESTER 1, SEMESTER 2 or SUMMER."
-            );
-        }
-
-        if (enrollmentStatus == null ||
-                !ALLOWED_STATUSES.contains(enrollmentStatus.trim().toUpperCase())) {
-            throw new ValidationException(
-                    "Status must be ACTIVE, COMPLETED or CANCELLED."
-            );
-        }
+        InputValidator.validateNotFutureDate(enrollmentDate, "Enrollment date");
+        InputValidator.validateAllowedValue(
+                semester, "Semester", "SEMESTER_1", "SEMESTER_2",
+                "SEMESTER_3", "FALL", "SPRING", "SUMMER"
+        );
+        InputValidator.validateAllowedValue(
+                enrollmentStatus, "Enrollment status",
+                "ACTIVE", "COMPLETED", "CANCELLED", "SUSPENDED"
+        );
     }
 
     @Override
@@ -147,13 +124,12 @@ public class Enrollment implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "ENROLLMENT DETAILS\n" +
-                "Enrollment ID: " + enrollmentId + "\n" +
-                "Student: " + (student == null ? "None" : student.getDisplayName()) + "\n" +
-                "Course: " + (course == null ? "None" : course.getCourseTitle()) + "\n" +
-                "Enrollment Date: " + enrollmentDate + "\n" +
-                "Semester: " + semester + "\n" +
-                "Status: " + enrollmentStatus;
+        return "Enrollment: " + enrollmentId
+                + " | Student: " + student.getDisplayName()
+                + " | Course: " + course.getCourseTitle()
+                + " | Date: " + enrollmentDate
+                + " | Semester: " + semester
+                + " | Status: " + enrollmentStatus;
     }
 
     @Override

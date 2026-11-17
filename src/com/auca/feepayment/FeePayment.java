@@ -1,14 +1,13 @@
+
 package com.auca.feepayment;
 
+import com.auca.student.Student;
 import com.auca.interfaces.Identifiable;
 import com.auca.interfaces.Registrable;
-import com.auca.student.Student;
 import com.auca.exceptions.ValidationException;
-
+import com.auca.validation.InputValidator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 
 public class FeePayment implements Identifiable, Registrable {
 
@@ -19,17 +18,9 @@ public class FeePayment implements Identifiable, Registrable {
     private String paymentMethod;
     private String receiptNumber;
 
-    private static final List<String> ALLOWED_METHODS =
-            Arrays.asList("CASH", "BANK", "MOBILE MONEY", "CARD");
-
-    public FeePayment(
-            String paymentId,
-            Student student,
-            BigDecimal amount,
-            LocalDate paymentDate,
-            String paymentMethod,
-            String receiptNumber) {
-
+    public FeePayment(String paymentId, Student student, BigDecimal amount,
+                      LocalDate paymentDate, String paymentMethod,
+                      String receiptNumber) {
         this.paymentId = paymentId;
         this.student = student;
         this.amount = amount;
@@ -42,44 +33,44 @@ public class FeePayment implements Identifiable, Registrable {
         return paymentId;
     }
 
-    public Student getStudent() {
-        return student;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public LocalDate getPaymentDate() {
-        return paymentDate;
-    }
-
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public String getReceiptNumber() {
-        return receiptNumber;
-    }
-
     public void setPaymentId(String paymentId) {
         this.paymentId = paymentId;
+    }
+
+    public Student getStudent() {
+        return student;
     }
 
     public void setStudent(Student student) {
         this.student = student;
     }
 
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public LocalDate getPaymentDate() {
+        return paymentDate;
     }
 
     public void setPaymentDate(LocalDate paymentDate) {
         this.paymentDate = paymentDate;
     }
 
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public String getReceiptNumber() {
+        return receiptNumber;
     }
 
     public void setReceiptNumber(String receiptNumber) {
@@ -93,8 +84,7 @@ public class FeePayment implements Identifiable, Registrable {
 
     @Override
     public String getDisplayName() {
-        return "Payment " + paymentId + " - " +
-                (student == null ? "No student" : student.getDisplayName());
+        return "Payment " + receiptNumber;
     }
 
     @Override
@@ -104,35 +94,19 @@ public class FeePayment implements Identifiable, Registrable {
 
     @Override
     public void validate() throws ValidationException {
-
-        if (paymentId == null || paymentId.trim().isEmpty()) {
-            throw new ValidationException("Payment ID is required.");
-        }
+        InputValidator.requireText(paymentId, "Payment ID");
 
         if (student == null) {
-            throw new ValidationException("A registered student must be selected.");
+            throw new ValidationException("Payment must belong to a student.");
         }
 
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("Payment amount must be greater than zero.");
-        }
-
-        if (paymentDate == null || paymentDate.isAfter(LocalDate.now())) {
-            throw new ValidationException(
-                    "Payment date is required and cannot be in the future."
-            );
-        }
-
-        if (paymentMethod == null ||
-                !ALLOWED_METHODS.contains(paymentMethod.trim().toUpperCase())) {
-            throw new ValidationException(
-                    "Payment method must be CASH, BANK, MOBILE MONEY or CARD."
-            );
-        }
-
-        if (receiptNumber == null || receiptNumber.trim().isEmpty()) {
-            throw new ValidationException("Receipt number is required.");
-        }
+        InputValidator.validatePositiveAmount(amount, "Payment amount");
+        InputValidator.validateNotFutureDate(paymentDate, "Payment date");
+        InputValidator.validateAllowedValue(
+                paymentMethod, "Payment method",
+                "CASH", "BANK_TRANSFER", "MOBILE_MONEY", "CARD"
+        );
+        InputValidator.requireText(receiptNumber, "Receipt number");
     }
 
     @Override
@@ -142,13 +116,12 @@ public class FeePayment implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "FEE PAYMENT DETAILS\n" +
-                "Payment ID: " + paymentId + "\n" +
-                "Student: " + (student == null ? "None" : student.getDisplayName()) + "\n" +
-                "Amount: " + amount + "\n" +
-                "Payment Date: " + paymentDate + "\n" +
-                "Payment Method: " + paymentMethod + "\n" +
-                "Receipt Number: " + receiptNumber;
+        return "Payment: " + paymentId
+                + " | Student: " + student.getDisplayName()
+                + " | Amount: " + amount
+                + " | Date: " + paymentDate
+                + " | Method: " + paymentMethod
+                + " | Receipt: " + receiptNumber;
     }
 
     @Override

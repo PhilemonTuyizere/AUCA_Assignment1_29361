@@ -1,8 +1,9 @@
+
 package com.auca.administrator;
 
 import com.auca.abstracts.Person;
 import com.auca.exceptions.ValidationException;
-
+import com.auca.validation.InputValidator;
 import java.time.LocalDate;
 
 public class Administrator extends Person {
@@ -15,20 +16,12 @@ public class Administrator extends Person {
     private boolean active;
 
     public Administrator(
-            String personId,
-            LocalDate dateOfBirth,
-            String phoneNumber,
-            String email,
-            String lastName,
-            String firstName,
-            String staffNumber,
-            String jobTitle,
-            String assignedOffice,
-            LocalDate employmentDate,
-            int accessLevel,
-            boolean active) {
+            String personId, String firstName, String lastName,
+            String email, String phoneNumber, LocalDate dateOfBirth,
+            String staffNumber, String jobTitle, String assignedOffice,
+            LocalDate employmentDate, int accessLevel, boolean active) {
 
-        super(personId, dateOfBirth, phoneNumber, email, lastName, firstName);
+        super(personId, firstName, lastName, email, phoneNumber, dateOfBirth);
 
         this.staffNumber = staffNumber;
         this.jobTitle = jobTitle;
@@ -38,62 +31,40 @@ public class Administrator extends Person {
         this.active = active;
     }
 
-    public Administrator(
-            String personId,
-            String firstName,
-            String lastName,
-            String email,
-            String phoneNumber,
-            LocalDate dateOfBirth,
-            String staffNumber,
-            String jobTitle,
-            String assignedOffice,
-            LocalDate employmentDate,
-            int accessLevel,
-            boolean active) {
-
-        this(personId, dateOfBirth, phoneNumber, email, lastName, firstName,
-                staffNumber, jobTitle, assignedOffice, employmentDate, accessLevel, active);
-    }
-
     public String getStaffNumber() {
         return staffNumber;
-    }
-
-    public String getJobTitle() {
-        return jobTitle;
-    }
-
-    public String getAssignedOffice() {
-        return assignedOffice;
-    }
-
-    public LocalDate getEmploymentDate() {
-        return employmentDate;
-    }
-
-    public int getAccessLevel() {
-        return accessLevel;
-    }
-
-    public boolean getActive() {
-        return active;
     }
 
     public void setStaffNumber(String staffNumber) {
         this.staffNumber = staffNumber;
     }
 
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
+    }
+
+    public String getAssignedOffice() {
+        return assignedOffice;
     }
 
     public void setAssignedOffice(String assignedOffice) {
         this.assignedOffice = assignedOffice;
     }
 
+    public LocalDate getEmploymentDate() {
+        return employmentDate;
+    }
+
     public void setEmploymentDate(LocalDate employmentDate) {
         this.employmentDate = employmentDate;
+    }
+
+    public int getAccessLevel() {
+        return accessLevel;
     }
 
     public void setAccessLevel(int accessLevel) {
@@ -105,13 +76,8 @@ public class Administrator extends Person {
     }
 
     @Override
-    public String getId() {
-        return getPersonId();
-    }
-
-    @Override
-    public String getDisplayName() {
-        return getFirstName() + " " + getLastName();
+    public String getRoleDescription() {
+        return "Administrator";
     }
 
     @Override
@@ -120,33 +86,19 @@ public class Administrator extends Person {
     }
 
     @Override
-    public String getRoleDescription() {
-        return "Administrator";
-    }
-
-    @Override
     public void validate() throws ValidationException {
-        super.validate();
+        InputValidator.validateLength(getPersonId(), "Person ID", 2, 30);
+        InputValidator.validateLength(getFirstName(), "First name", 2, 60);
+        InputValidator.validateLength(getLastName(), "Last name", 2, 60);
+        InputValidator.validateEmail(getEmail(), "Email");
+        InputValidator.validatePhone(getPhoneNumber(), "Phone number");
+        InputValidator.validatePastDate(getDateOfBirth(), "Date of birth");
 
-        if (staffNumber == null || staffNumber.trim().length() < MIN_ID_LENGTH || staffNumber.trim().length() > MAX_ID_LENGTH) {
-            throw new ValidationException("Staff number is required and must be " + MIN_ID_LENGTH + "-" + MAX_ID_LENGTH + " characters.");
-        }
-
-        if (jobTitle == null || jobTitle.trim().length() < MIN_NAME_LENGTH || jobTitle.trim().length() > 120) {
-            throw new ValidationException("Job title must contain 2-120 characters.");
-        }
-
-        if (assignedOffice == null || assignedOffice.trim().isEmpty()) {
-            throw new ValidationException("Assigned office is required.");
-        }
-
-        if (employmentDate == null || employmentDate.isAfter(LocalDate.now())) {
-            throw new ValidationException("Employment date is required and cannot be in the future.");
-        }
-
-        if (accessLevel < 1) {
-            throw new ValidationException("Access level must be at least 1.");
-        }
+        InputValidator.requireText(staffNumber, "Staff number");
+        InputValidator.validateLength(jobTitle, "Job title", 2, 60);
+        InputValidator.requireText(assignedOffice, "Assigned office");
+        InputValidator.validateNotFutureDate(employmentDate, "Employment date");
+        InputValidator.validateRange(accessLevel, "Access level", 1, 5);
     }
 
     @Override
@@ -156,14 +108,13 @@ public class Administrator extends Person {
 
     @Override
     public String getRegistrationSummary() {
-        return "ADMINISTRATOR DETAILS\n" +
-                super.getRegistrationSummary() + "\n" +
-                "Staff Number: " + staffNumber + "\n" +
-                "Job Title: " + jobTitle + "\n" +
-                "Assigned Office: " + assignedOffice + "\n" +
-                "Employment Date: " + employmentDate + "\n" +
-                "Access Level: " + accessLevel + "\n" +
-                "Active: " + (active ? "YES" : "NO");
+        return "Administrator: " + getDisplayName()
+                + " | ID: " + getPersonId()
+                + " | Staff Number: " + staffNumber
+                + " | Job Title: " + jobTitle
+                + " | Office: " + assignedOffice
+                + " | Access Level: " + accessLevel
+                + " | Active: " + active;
     }
 
     @Override

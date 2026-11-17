@@ -1,11 +1,12 @@
+
 package com.auca.bookloan;
 
-import com.auca.interfaces.Identifiable;
-import com.auca.interfaces.Registrable;
 import com.auca.student.Student;
 import com.auca.librarybook.LibraryBook;
+import com.auca.interfaces.Identifiable;
+import com.auca.interfaces.Registrable;
 import com.auca.exceptions.ValidationException;
-
+import com.auca.validation.InputValidator;
 import java.time.LocalDate;
 
 public class BookLoan implements Identifiable, Registrable {
@@ -17,78 +18,82 @@ public class BookLoan implements Identifiable, Registrable {
     private LocalDate dueDate;
     private LocalDate returnedDate;
 
-    public BookLoan(
-            String loanId,
-            Student student,
-            LibraryBook book,
-            LocalDate borrowedDate,
-            LocalDate dueDate,
-            LocalDate returnedDate) {
-
+    public BookLoan(String loanId, Student student, LibraryBook book,
+                    LocalDate borrowedDate, LocalDate dueDate,
+                    LocalDate returnedDate) {
         this.loanId = loanId;
         this.student = student;
         this.book = book;
         this.borrowedDate = borrowedDate;
         this.dueDate = dueDate;
         this.returnedDate = returnedDate;
-    }
-
-    public BookLoan(
-            String loanId,
-            Student student,
-            LibraryBook book,
-            LocalDate borrowedDate,
-            LocalDate dueDate) {
-
-        this(loanId, student, book, borrowedDate, dueDate, null);
     }
 
     public String getLoanId() {
         return loanId;
     }
 
-    public Student getStudent() {
-        return student;
-    }
-
-    public LibraryBook getBook() {
-        return book;
-    }
-
-    public LocalDate getBorrowedDate() {
-        return borrowedDate;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public LocalDate getReturnedDate() {
-        return returnedDate;
-    }
-
     public void setLoanId(String loanId) {
         this.loanId = loanId;
+    }
+
+    public Student getStudent() {
+        return student;
     }
 
     public void setStudent(Student student) {
         this.student = student;
     }
 
+    public LibraryBook getBook() {
+        return book;
+    }
+
     public void setBook(LibraryBook book) {
         this.book = book;
+    }
+
+    public LocalDate getBorrowedDate() {
+        return borrowedDate;
     }
 
     public void setBorrowedDate(LocalDate borrowedDate) {
         this.borrowedDate = borrowedDate;
     }
 
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
 
+    public LocalDate getReturnedDate() {
+        return returnedDate;
+    }
+
     public void setReturnedDate(LocalDate returnedDate) {
         this.returnedDate = returnedDate;
+    }
+
+    public boolean isReturned() {
+        return returnedDate != null;
+    }
+
+    public void markReturned(LocalDate date) throws ValidationException {
+        if (isReturned()) {
+            throw new ValidationException("This book has already been returned.");
+        }
+
+        if (date == null || date.isBefore(borrowedDate)) {
+            throw new ValidationException(
+                    "Return date cannot be before the borrowed date."
+            );
+        }
+
+        returnedDate = date;
+        book.returnCopy();
     }
 
     @Override
@@ -98,44 +103,37 @@ public class BookLoan implements Identifiable, Registrable {
 
     @Override
     public String getDisplayName() {
-        return (student == null ? "Unknown student" : student.getDisplayName()) +
-                " - " +
-                (book == null ? "Unknown book" : book.getTitle());
+        return "Loan " + loanId + " - " + book.getTitle();
     }
 
     @Override
     public boolean isActive() {
-        return returnedDate == null;
+        return !isReturned();
     }
 
     @Override
     public void validate() throws ValidationException {
-
-        if (loanId == null || loanId.trim().isEmpty()) {
-            throw new ValidationException("Loan ID is required.");
-        }
+        InputValidator.requireText(loanId, "Loan ID");
 
         if (student == null) {
-            throw new ValidationException("A registered student must be selected.");
+            throw new ValidationException("A loan must belong to a student.");
         }
 
         if (book == null) {
-            throw new ValidationException("A registered library book must be selected.");
+            throw new ValidationException("A loan must reference a library book.");
         }
 
-        if (borrowedDate == null || borrowedDate.isAfter(LocalDate.now())) {
-            throw new ValidationException("Borrowed date is required and cannot be in the future.");
+        if (borrowedDate == null) {
+            throw new ValidationException("Borrowed date is required.");
         }
 
-        if (dueDate == null || !dueDate.isAfter(borrowedDate)) {
-            throw new ValidationException(
-                    "Due date must be after the borrowed date."
-            );
-        }
+        InputValidator.validateDateOrder(
+                borrowedDate, dueDate, "Due date must be after borrowed date."
+        );
 
         if (returnedDate != null && returnedDate.isBefore(borrowedDate)) {
             throw new ValidationException(
-                    "Returned date cannot be before the borrowed date."
+                    "Return date cannot be before borrowed date."
             );
         }
     }
@@ -147,14 +145,13 @@ public class BookLoan implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "BOOK LOAN DETAILS\n" +
-                "Loan ID: " + loanId + "\n" +
-                "Student: " + (student == null ? "None" : student.getDisplayName()) + "\n" +
-                "Book: " + (book == null ? "None" : book.getTitle()) + "\n" +
-                "Borrowed Date: " + borrowedDate + "\n" +
-                "Due Date: " + dueDate + "\n" +
-                "Returned Date: " +
-                (returnedDate == null ? "Not returned" : returnedDate);
+        return "Book Loan: " + loanId
+                + " | Student: " + student.getDisplayName()
+                + " | Book: " + book.getTitle()
+                + " | Borrowed: " + borrowedDate
+                + " | Due: " + dueDate
+                + " | Returned: "
+                + (returnedDate == null ? "Not returned" : returnedDate);
     }
 
     @Override

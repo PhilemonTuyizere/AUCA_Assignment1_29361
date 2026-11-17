@@ -1,4 +1,3 @@
-
 package com.auca.exceptions;
 
 public class RecordNotFoundException extends Exception {

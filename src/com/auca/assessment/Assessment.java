@@ -1,13 +1,12 @@
+
 package com.auca.assessment;
 
+import com.auca.enrollment.Enrollment;
 import com.auca.interfaces.Identifiable;
 import com.auca.interfaces.Registrable;
-import com.auca.enrollment.Enrollment;
 import com.auca.exceptions.ValidationException;
-
+import com.auca.validation.InputValidator;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 
 public class Assessment implements Identifiable, Registrable {
 
@@ -18,17 +17,9 @@ public class Assessment implements Identifiable, Registrable {
     private double obtainedScore;
     private LocalDate assessmentDate;
 
-    private static final List<String> ALLOWED_TYPES =
-            Arrays.asList("QUIZ", "ASSIGNMENT", "MIDTERM", "FINAL", "PROJECT");
-
-    public Assessment(
-            String assessmentId,
-            Enrollment enrollment,
-            String assessmentType,
-            double maximumScore,
-            double obtainedScore,
-            LocalDate assessmentDate) {
-
+    public Assessment(String assessmentId, Enrollment enrollment,
+                      String assessmentType, double maximumScore,
+                      double obtainedScore, LocalDate assessmentDate) {
         this.assessmentId = assessmentId;
         this.enrollment = enrollment;
         this.assessmentType = assessmentType;
@@ -41,44 +32,44 @@ public class Assessment implements Identifiable, Registrable {
         return assessmentId;
     }
 
-    public Enrollment getEnrollment() {
-        return enrollment;
-    }
-
-    public String getAssessmentType() {
-        return assessmentType;
-    }
-
-    public double getMaximumScore() {
-        return maximumScore;
-    }
-
-    public double getObtainedScore() {
-        return obtainedScore;
-    }
-
-    public LocalDate getAssessmentDate() {
-        return assessmentDate;
-    }
-
     public void setAssessmentId(String assessmentId) {
         this.assessmentId = assessmentId;
+    }
+
+    public Enrollment getEnrollment() {
+        return enrollment;
     }
 
     public void setEnrollment(Enrollment enrollment) {
         this.enrollment = enrollment;
     }
 
+    public String getAssessmentType() {
+        return assessmentType;
+    }
+
     public void setAssessmentType(String assessmentType) {
         this.assessmentType = assessmentType;
+    }
+
+    public double getMaximumScore() {
+        return maximumScore;
     }
 
     public void setMaximumScore(double maximumScore) {
         this.maximumScore = maximumScore;
     }
 
+    public double getObtainedScore() {
+        return obtainedScore;
+    }
+
     public void setObtainedScore(double obtainedScore) {
         this.obtainedScore = obtainedScore;
+    }
+
+    public LocalDate getAssessmentDate() {
+        return assessmentDate;
     }
 
     public void setAssessmentDate(LocalDate assessmentDate) {
@@ -92,24 +83,20 @@ public class Assessment implements Identifiable, Registrable {
 
     @Override
     public String getDisplayName() {
-        return assessmentType + " - " +
-                (enrollment == null ? "No enrollment" : enrollment.getDisplayName());
+        return assessmentType + " - " + assessmentId;
     }
 
     @Override
     public boolean isActive() {
-        return enrollment != null && enrollment.isActive();
+        return true;
     }
 
     @Override
     public void validate() throws ValidationException {
-
-        if (assessmentId == null || assessmentId.trim().isEmpty()) {
-            throw new ValidationException("Assessment ID is required.");
-        }
+        InputValidator.requireText(assessmentId, "Assessment ID");
 
         if (enrollment == null) {
-            throw new ValidationException("An enrollment must be selected.");
+            throw new ValidationException("Assessment requires an enrollment.");
         }
 
         if (!enrollment.isActive()) {
@@ -118,28 +105,14 @@ public class Assessment implements Identifiable, Registrable {
             );
         }
 
-        if (assessmentType == null ||
-                !ALLOWED_TYPES.contains(assessmentType.trim().toUpperCase())) {
-            throw new ValidationException(
-                    "Assessment type must be QUIZ, ASSIGNMENT, MIDTERM, FINAL or PROJECT."
-            );
-        }
+        InputValidator.validateAllowedValue(
+                assessmentType, "Assessment type",
+                "QUIZ", "ASSIGNMENT", "MIDTERM", "FINAL", "PROJECT", "PRESENTATION"
+        );
 
-        if (maximumScore <= 0) {
-            throw new ValidationException("Maximum score must be greater than zero.");
-        }
-
-        if (obtainedScore < 0 || obtainedScore > maximumScore) {
-            throw new ValidationException(
-                    "Obtained score must be between zero and maximum score."
-            );
-        }
-
-        if (assessmentDate == null || assessmentDate.isAfter(LocalDate.now())) {
-            throw new ValidationException(
-                    "Assessment date is required and cannot be in the future."
-            );
-        }
+        InputValidator.validatePositive(maximumScore, "Maximum score");
+        InputValidator.validateScore(obtainedScore, maximumScore);
+        InputValidator.validateNotFutureDate(assessmentDate, "Assessment date");
     }
 
     @Override
@@ -149,13 +122,12 @@ public class Assessment implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "ASSESSMENT DETAILS\n" +
-                "Assessment ID: " + assessmentId + "\n" +
-                "Enrollment: " + (enrollment == null ? "None" : enrollment.getId() + " (" + enrollment.getDisplayName() + ")") + "\n" +
-                "Assessment Type: " + assessmentType + "\n" +
-                "Maximum Score: " + maximumScore + "\n" +
-                "Obtained Score: " + obtainedScore + "\n" +
-                "Assessment Date: " + assessmentDate;
+        return "Assessment: " + assessmentId
+                + " | Student: " + enrollment.getStudent().getDisplayName()
+                + " | Course: " + enrollment.getCourse().getCourseTitle()
+                + " | Type: " + assessmentType
+                + " | Score: " + obtainedScore + "/" + maximumScore
+                + " | Date: " + assessmentDate;
     }
 
     @Override

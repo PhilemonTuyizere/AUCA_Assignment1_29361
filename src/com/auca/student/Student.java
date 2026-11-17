@@ -1,11 +1,15 @@
+
 package com.auca.student;
 
-import java.time.LocalDate;
 import com.auca.abstracts.AcademicMember;
 import com.auca.department.Department;
 import com.auca.exceptions.ValidationException;
+import com.auca.validation.InputValidator;
+
+import java.time.LocalDate;
 
 public class Student extends AcademicMember {
+
     private String studentNumber;
     private String programName;
     private LocalDate admissionDate;
@@ -13,84 +17,95 @@ public class Student extends AcademicMember {
     private String guardianPhone;
     private boolean scholarshipStatus;
 
-    public Student(String personId, LocalDate dateOfBirth,
-                   String phoneNumber, String email,
-                   String lastName, String firstName,
-                   String memberNumber, Department department,
-                   LocalDate joinDate, String academicStatus,
-                   String institutionalEmail, String advisorName,
-                   String studentNumber, boolean scholarshipStatus,
-                   String guardianPhone, int studyYear, LocalDate admissionDate,
-                   String programName) {
-        super(personId, dateOfBirth, phoneNumber, email, lastName, firstName,
-                memberNumber, department, joinDate, academicStatus, institutionalEmail, advisorName);
-        this.studentNumber = studentNumber;
-        this.scholarshipStatus = scholarshipStatus;
-        this.guardianPhone = guardianPhone;
-        this.studyYear = studyYear;
-        this.admissionDate = admissionDate;
-        this.programName = programName;
-    }
+    public Student(
+            String personId,
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            LocalDate dateOfBirth,
+            String memberNumber,
+            Department department,
+            LocalDate joinDate,
+            String academicStatus,
+            String institutionalEmail,
+            String advisorName,
+            String studentNumber,
+            String programName,
+            LocalDate admissionDate,
+            int studyYear,
+            String guardianPhone,
+            boolean scholarshipStatus
+    ) {
+        super(
+                personId,
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                dateOfBirth,
+                memberNumber,
+                department,
+                joinDate,
+                academicStatus,
+                institutionalEmail,
+                advisorName
+        );
 
-    public Student(String personId, String firstName, String lastName,
-                   String email, String phoneNumber, LocalDate dateOfBirth,
-                   String memberNumber, Department department,
-                   LocalDate joinDate, String academicStatus,
-                   String institutionalEmail, String advisorName,
-                   String studentNumber, String programName,
-                   LocalDate admissionDate, int studyYear,
-                   String guardianPhone, boolean scholarshipStatus) {
-        this(personId, dateOfBirth, phoneNumber, email, lastName, firstName,
-                memberNumber, department, joinDate, academicStatus, institutionalEmail, advisorName,
-                studentNumber, scholarshipStatus, guardianPhone, studyYear, admissionDate, programName);
+        this.studentNumber = studentNumber;
+        this.programName = programName;
+        this.admissionDate = admissionDate;
+        this.studyYear = studyYear;
+        this.guardianPhone = guardianPhone;
+        this.scholarshipStatus = scholarshipStatus;
     }
 
     public String getStudentNumber() {
         return studentNumber;
     }
 
-    public String getProgramName() {
-        return programName;
-    }
-
-    public LocalDate getAdmissionDate() {
-        return admissionDate;
-    }
-
-    public int getStudyYear() {
-        return studyYear;
-    }
-
-    public String getGuardianPhone() {
-        return guardianPhone;
-    }
-
-    public boolean isScholarshipStatus() {
-        return scholarshipStatus;
-    }
-
-    public boolean getScholarshipStatus() {
-        return scholarshipStatus;
-    }
-
     public void setStudentNumber(String studentNumber) {
         this.studentNumber = studentNumber;
     }
 
-    public void setAdmissionDate(LocalDate admissionDate) {
-        this.admissionDate = admissionDate;
+    public String getProgramName() {
+        return programName;
     }
 
     public void setProgramName(String programName) {
         this.programName = programName;
     }
 
+    public LocalDate getAdmissionDate() {
+        return admissionDate;
+    }
+
+    public void setAdmissionDate(LocalDate admissionDate) {
+        this.admissionDate = admissionDate;
+    }
+
+    public int getStudyYear() {
+        return studyYear;
+    }
+
     public void setStudyYear(int studyYear) {
         this.studyYear = studyYear;
     }
 
+    public String getGuardianPhone() {
+        return guardianPhone;
+    }
+
     public void setGuardianPhone(String guardianPhone) {
         this.guardianPhone = guardianPhone;
+    }
+
+    public boolean getScholarshipStatus() {
+        return scholarshipStatus;
+    }
+
+    public boolean isScholarshipStatus() {
+        return scholarshipStatus;
     }
 
     public void setScholarshipStatus(boolean scholarshipStatus) {
@@ -98,23 +113,13 @@ public class Student extends AcademicMember {
     }
 
     @Override
+    public String getAcademicCategory() {
+        return "STUDENT";
+    }
+
+    @Override
     public String getRoleDescription() {
         return "Student";
-    }
-
-    @Override
-    public String getAcademicCategory() {
-        return "Learner";
-    }
-
-    @Override
-    public String getId() {
-        return getPersonId();
-    }
-
-    @Override
-    public String getDisplayName() {
-        return getFirstName() + " " + getLastName();
     }
 
     @Override
@@ -125,42 +130,61 @@ public class Student extends AcademicMember {
     @Override
     public void validate() throws ValidationException {
         super.validate();
-        if (studentNumber == null || studentNumber.trim().length() < MIN_ID_LENGTH || studentNumber.trim().length() > MAX_ID_LENGTH) {
-            throw new ValidationException("Student number is required and must be " + MIN_ID_LENGTH + "-" + MAX_ID_LENGTH + " characters.");
-        }
-        if (programName == null || programName.trim().length() < MIN_NAME_LENGTH || programName.trim().length() > 120) {
-            throw new ValidationException("Program name must contain 2-120 characters.");
-        }
-        if (studyYear < 1 || studyYear > 6) {
-            throw new ValidationException("Study year must be between 1 and 6.");
-        }
-        if (admissionDate == null || admissionDate.isAfter(LocalDate.now())) {
-            throw new ValidationException("Admission date is required and cannot be in the future.");
-        }
-        if (guardianPhone == null || !guardianPhone.trim().matches("^\\+?\\d{" + MIN_PHONE_LENGTH + "," + MAX_PHONE_LENGTH + "}$")) {
-            throw new ValidationException("Guardian phone must contain " + MIN_PHONE_LENGTH + "-" + MAX_PHONE_LENGTH + " digits, optionally starting with +.");
-        }
+
+        InputValidator.validateAllowedValue(
+                getAcademicStatus(),
+                "Academic status",
+                "ACTIVE",
+                "INACTIVE"
+        );
+
+        InputValidator.requireText(studentNumber, "Student number");
+        InputValidator.validateLength(studentNumber, "Student number", 4, 30);
+
+        InputValidator.requireText(programName, "Program name");
+        InputValidator.validateLength(programName, "Program name", 2, 120);
+
+        InputValidator.validateNotFutureDate(admissionDate, "Admission date");
+
+        InputValidator.validateRange(studyYear, "Study year", 1, 8);
+
+        InputValidator.validatePhone(guardianPhone, "Guardian phone");
     }
 
     @Override
     public void printDetails() {
-        System.out.println(getRegistrationSummary());
+        System.out.println(this);
     }
 
     @Override
     public String getRegistrationSummary() {
-        return "STUDENT DETAILS\n" +
-                super.getRegistrationSummary() + "\n" +
-                "Student Number: " + studentNumber + "\n" +
-                "Program Name: " + programName + "\n" +
-                "Admission Date: " + admissionDate + "\n" +
-                "Study Year: " + studyYear + "\n" +
-                "Guardian Phone: " + guardianPhone + "\n" +
-                "Scholarship: " + (scholarshipStatus ? "YES" : "NO");
+        return "Student: " + getFirstName() + " " + getLastName()
+                + " | Student Number: " + studentNumber
+                + " | Program: " + programName
+                + " | Study Year: " + studyYear
+                + " | Department: " + getDepartment().getDepartmentName()
+                + " | Status: " + getAcademicStatus();
     }
 
     @Override
     public String toString() {
-        return getRegistrationSummary();
+        return "Student Details\n"
+                + "Person ID: " + getPersonId() + "\n"
+                + "Name: " + getFirstName() + " " + getLastName() + "\n"
+                + "Email: " + getEmail() + "\n"
+                + "Phone: " + getPhoneNumber() + "\n"
+                + "Date of Birth: " + getDateOfBirth() + "\n"
+                + "Member Number: " + getMemberNumber() + "\n"
+                + "Department: " + getDepartment().getDepartmentName() + "\n"
+                + "Join Date: " + getJoinDate() + "\n"
+                + "Academic Status: " + getAcademicStatus() + "\n"
+                + "Institutional Email: " + getInstitutionalEmail() + "\n"
+                + "Advisor Name: " + getAdvisorName() + "\n"
+                + "Student Number: " + studentNumber + "\n"
+                + "Program Name: " + programName + "\n"
+                + "Admission Date: " + admissionDate + "\n"
+                + "Study Year: " + studyYear + "\n"
+                + "Guardian Phone: " + guardianPhone + "\n"
+                + "Scholarship Status: " + (scholarshipStatus ? "YES" : "NO");
     }
 }

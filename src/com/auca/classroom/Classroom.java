@@ -1,8 +1,10 @@
+
 package com.auca.classroom;
 
 import com.auca.interfaces.Identifiable;
 import com.auca.interfaces.Registrable;
 import com.auca.exceptions.ValidationException;
+import com.auca.validation.InputValidator;
 
 public class Classroom implements Identifiable, Registrable {
 
@@ -13,14 +15,9 @@ public class Classroom implements Identifiable, Registrable {
     private int floorNumber;
     private boolean available;
 
-    public Classroom(
-            String classroomId,
-            String buildingName,
-            String roomNumber,
-            int capacity,
-            int floorNumber,
-            boolean available) {
-
+    public Classroom(String classroomId, String buildingName,
+                     String roomNumber, int capacity,
+                     int floorNumber, boolean available) {
         this.classroomId = classroomId;
         this.buildingName = buildingName;
         this.roomNumber = roomNumber;
@@ -29,58 +26,48 @@ public class Classroom implements Identifiable, Registrable {
         this.available = available;
     }
 
-    public Classroom(
-            String classroomId,
-            String buildingName,
-            String roomNumber,
-            int capacity,
-            int floorNumber) {
-
-        this(classroomId, buildingName, roomNumber, capacity, floorNumber, true);
-    }
-
     public String getClassroomId() {
         return classroomId;
-    }
-
-    public String getBuildingName() {
-        return buildingName;
-    }
-
-    public String getRoomNumber() {
-        return roomNumber;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public int getFloorNumber() {
-        return floorNumber;
-    }
-
-    public boolean isAvailable() {
-        return available;
     }
 
     public void setClassroomId(String classroomId) {
         this.classroomId = classroomId;
     }
 
+    public String getBuildingName() {
+        return buildingName;
+    }
+
     public void setBuildingName(String buildingName) {
         this.buildingName = buildingName;
+    }
+
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
     }
 
+    public int getCapacity() {
+        return capacity;
+    }
+
     public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
 
+    public int getFloorNumber() {
+        return floorNumber;
+    }
+
     public void setFloorNumber(int floorNumber) {
         this.floorNumber = floorNumber;
+    }
+
+    public boolean isAvailable() {
+        return available;
     }
 
     public void setAvailable(boolean available) {
@@ -104,26 +91,11 @@ public class Classroom implements Identifiable, Registrable {
 
     @Override
     public void validate() throws ValidationException {
-
-        if (classroomId == null || classroomId.trim().isEmpty()) {
-            throw new ValidationException("Classroom ID is required.");
-        }
-
-        if (buildingName == null || buildingName.trim().isEmpty()) {
-            throw new ValidationException("Building name is required.");
-        }
-
-        if (roomNumber == null || roomNumber.trim().isEmpty()) {
-            throw new ValidationException("Room number is required.");
-        }
-
-        if (capacity <= 0) {
-            throw new ValidationException("Classroom capacity must be greater than zero.");
-        }
-
-        if (floorNumber < 0) {
-            throw new ValidationException("Floor number cannot be negative.");
-        }
+        InputValidator.requireText(classroomId, "Classroom ID");
+        InputValidator.requireText(buildingName, "Building name");
+        InputValidator.requireText(roomNumber, "Room number");
+        InputValidator.validatePositive(capacity, "Classroom capacity");
+        InputValidator.validateNonNegative(floorNumber, "Floor number");
     }
 
     @Override
@@ -133,13 +105,11 @@ public class Classroom implements Identifiable, Registrable {
 
     @Override
     public String getRegistrationSummary() {
-        return "CLASSROOM DETAILS\n" +
-                "Classroom ID: " + classroomId + "\n" +
-                "Building: " + buildingName + "\n" +
-                "Room Number: " + roomNumber + "\n" +
-                "Capacity: " + capacity + "\n" +
-                "Floor: " + floorNumber + "\n" +
-                "Available: " + (available ? "YES" : "NO");
+        return "Classroom: " + getDisplayName()
+                + " | ID: " + classroomId
+                + " | Capacity: " + capacity
+                + " | Floor: " + floorNumber
+                + " | Available: " + available;
     }
 
     @Override
